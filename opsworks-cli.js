@@ -19,6 +19,30 @@ var opsworks = new AWS.OpsWorks();
 
 app.version('0.0.1');
 
+app.command('update')
+.description('Updates local OpsWorks manifest')
+.action(function(){
+	opsworks.describeStacks(function(error, data){
+		if(error){
+			console.log(error);
+		}
+		else{
+			/*
+			 * Amazon sends down the stack's custom JSON which is fucking insane because
+			 * people put passwords and other sensitive information in here.  For good
+			 * measure, we are choosing not to store this information.
+			 */
+			data.Stacks.forEach(function(stack, index, stacks){
+				delete stack.CustomJson;
+			});
+			
+			fs.writeFile('/tmp/opsworks-cli.stack.json', JSON.stringify(data), function(){
+				console.log("Stack information updated");
+			});
+		}
+	});
+});
+
 app.command('list [stack] [layer]')
 .description('List the instances in a layer')
 .action(function(stack, layer, options){
