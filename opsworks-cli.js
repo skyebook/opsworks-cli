@@ -23,6 +23,14 @@ app.command('list [stack] [layer]')
 .description('List the instances in a layer')
 .action(function(stack, layer, options){
 	console.log("listing %s::%s", stack, layer);
+	opsworks.describeInstances({StackId:stack, LayerId:layer}, function(error, data){
+		if(error){
+			console.log(error);
+		}
+		else{
+			console.log(data);
+		}
+	});
 });
 
 app.command('ssh [stack] [layer] [hostname]')
