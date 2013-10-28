@@ -1,6 +1,21 @@
 // Load the configuration
 var app = require('commander');
+var AWS = require('aws-sdk');
 var config = require('./config');
+var fs = require('fs');
+
+var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+
+if(typeof AWS_ACCESS_KEY_ID == 'undefined' || typeof AWS_SECRET_ACCESS_KEY == 'undefined'){
+	console.log("AWS credentials must be set");
+	process.exit(1);
+}
+
+var awsOptions = { "accessKeyId": AWS_ACCESS_KEY_ID, "secretAccessKey": AWS_SECRET_ACCESS_KEY, "region": "us-east-1" };
+AWS.config.update(awsOptions);
+
+var opsworks = new AWS.OpsWorks();
 
 app.version('0.0.1');
 
