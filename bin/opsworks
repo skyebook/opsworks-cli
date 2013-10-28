@@ -1,0 +1,2 @@
+#!/bin/sh
+node /Users/skyebook/Documents/opsworks-cli/opsworks-cli.js "$@"

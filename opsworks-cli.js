@@ -1,8 +1,12 @@
-// Load the configuration
+// Third-Party Dependencies
 var app = require('commander');
 var AWS = require('aws-sdk');
-var config = require('./config');
 var fs = require('fs');
+var spawn = require('child_process').spawn;
+
+// Internal Dependencies
+var config = require('./config');
+var fetcher = require('./lib/fetcher');
 
 var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
@@ -19,48 +23,68 @@ var opsworks = new AWS.OpsWorks();
 
 app.version('0.0.1');
 
-app.command('update')
-.description('Updates local OpsWorks manifest')
-.action(function(){
-	opsworks.describeStacks(function(error, data){
-		if(error){
-			console.log(error);
-		}
-		else{
-			/*
-			 * Amazon sends down the stack's custom JSON which is fucking insane because
-			 * people put passwords and other sensitive information in here.  For good
-			 * measure, we are choosing not to store this information.
-			 */
-			data.Stacks.forEach(function(stack, index, stacks){
-				delete stack.CustomJson;
-			});
-			
-			fs.writeFile('/tmp/opsworks-cli.stack.json', JSON.stringify(data), function(){
-				console.log("Stack information updated");
-			});
-		}
-	});
-});
-
 app.command('list [stack] [layer]')
 .description('List the instances in a layer')
 .action(function(stack, layer, options){
-	console.log("listing %s::%s", stack, layer);
-	opsworks.describeInstances({StackId:stack, LayerId:layer}, function(error, data){
-		if(error){
-			console.log(error);
+		
+	fetcher.getLayerId({StackName:stack, LayerName:layer}, function(LayerId){
+		if(LayerId==null){
+			console.log('Layer ' + layer + ' not found');
+			process.exit(1);
 		}
-		else{
-			console.log(data);
-		}
+			
+		opsworks.describeInstances({LayerId:LayerId}, function(error, data){
+			if(error){
+				console.log(error);
+			}
+			else{
+				data.Instances.forEach(function(instance, index, instances){
+					console.log(instance.Hostname+'\t'+instance.PublicIp+'\t'+instance.Status);
+				});
+			}
+		});
 	});
 });
 
 app.command('ssh [stack] [layer] [hostname]')
 .description('Log into in an instance')
+.option('-i, --identity <identity>', 'The location of the key to use')
 .action(function(stack, layer, hostname, options){
 	console.log('Creating an SSH connection to %s::%s::%s', stack, layer, hostname);
+	
+	fetcher.getInstance({StackName:stack, LayerName:layer, Hostname:hostname}, function(instance){
+		if(instance==null){
+			console.log('Instance %s could not be found', hostname);
+			process.exit(1);
+		}
+		
+		//console.log(instance);
+		if(options.identity){
+			//var command = 'ssh -i '+options.i +' ubuntu@'+instance.PublicIp;
+			//console.log('Running `%s`', command);
+			var args = [
+			'-tt',
+			'-i' + options.identity,
+			'ubuntu@'+instance.PublicIp
+			];
+			var ssh = spawn('ssh', args);
+			
+			ssh.on('exit', process.exit);
+
+			ssh.stdout.pipe(process.stdout);
+			ssh.stderr.pipe(process.stderr);
+
+			process.stdin.pipe(ssh.stdin);
+			//process.stdin.resume();
+			
+			ssh.on('error', function(error){
+				console.log(error);
+			});
+		}
+		else{
+			console.log("No identity provided");
+		}
+	});
 });
 
 app.command('add [stack] [layer] [size] [availability_zone]')
