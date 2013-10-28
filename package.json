@@ -1,0 +1,10 @@
+{
+	"name": "opsworks-cli",
+	"version": "0.0.1",
+	"author": "Skye Book <skye@skyebook.net>",
+	"description": "Tools for administering AWS OpsWorks layers.",
+	"dependencies": {
+		"aws-sdk": "1.10.0",
+		"commander": "2.0.0"
+	}
+}
