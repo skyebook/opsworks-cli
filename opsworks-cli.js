@@ -91,11 +91,11 @@ app.command('ssh [stack] [layer] [hostname]')
 
 app.command('add [stack] [layer] [availability_zone]')
 .description('Add an instance to a layer')
-.option('-s, --start', 'Starts the instance immediately.')
+.option('--start', 'Starts the instance immediately.')
 .option('-h, --hostname [hostname]', 'Supply the hostname to be used for the instance.')
 .option('-k, --keypair [keypair]', 'Specify which key pair to use when logging into the instance.')
 .option('-a, --ami [ami]', 'Specify a custom AMI to boot.')
-.option('-s, --size [size]', 'Specify the size of the EC2 instance.', 'c1.medium')
+.option('-s,--size [size]', 'Specify the size of the EC2 instance.', 'c1.medium')
 .option('--scaling-type [scaling-type]', 'Specify the scaling type of the instance (accepts \'timer\' or \'load\')')
 .action(function(stack, layer, availability_zone, options){	
 	// Is the instance size valid?
@@ -154,6 +154,17 @@ app.command('add [stack] [layer] [availability_zone]')
 					}
 					else{
 						console.log('Instance %s Created', data.InstanceId);
+						if(options.start){
+							console.log("want to start instance now");
+							opsworks.startInstance({InstanceId:data.InstanceId}, function(error, data){
+								if(error){
+									console.log(error);
+									process.exit(1);
+								}
+								
+								console.log("Instance starting");
+							});
+						}
 					}
 				});
 			});
