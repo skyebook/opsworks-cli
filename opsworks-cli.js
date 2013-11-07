@@ -89,15 +89,19 @@ app.command('ssh [stack] [layer] [hostname]')
 	});
 });
 
-app.command('add [stack] [layer] [availability_zone]')
-.description('Add an instance to a layer')
+app.command('add [stack] [layer]')
+.description('Add one or more instances to a layer')
 .option('--start', 'Starts the instance immediately.')
 .option('-h, --hostname [hostname]', 'Supply the hostname to be used for the instance.')
+.option('-p, --prefix [prefix]', 'Supply the hostname to be used for the instance.', '')
 .option('-k, --keypair [keypair]', 'Specify which key pair to use when logging into the instance.')
 .option('-a, --ami [ami]', 'Specify a custom AMI to boot.')
 .option('-s,--size [size]', 'Specify the size of the EC2 instance.', 'c1.medium')
+.option('-c,--count [count]', 'Specify the number of EC2 instances to add', 1)
 .option('--scaling-type [scaling-type]', 'Specify the scaling type of the instance (accepts \'timer\' or \'load\')')
-.action(function(stack, layer, availability_zone, options){	
+.option('--availability-zone [availability-zone]', 'Specify the availability zone if the distribute flag has not been used')
+.option('--distribute', 'Use this flag to automatically distribute nodes across all of the stack\'s availability zones')
+.action(function(stack, layer, options){	
 	// Is the instance size valid?
 	if(!util.validateInstanceType(options.size)){
 		console.log('%s is not a valid instance type.', options.size);
@@ -111,65 +115,52 @@ app.command('add [stack] [layer] [availability_zone]')
 		}
 	}
 	
-	util.validateAvailabilityZone(availability_zone, function(valid){
-		if(!valid){
-			console.log('%s is not a valid availability zone', availability_zone);
-			process.exit(1);
-		}
-		else{
-			// Get the Stack and the Layer ID's
-			fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
-				if(LayerId==null){
-					console.log('Layer ' + layer + ' not found');
-					process.exit(1);
-				}
-		
-				var params = {
-					StackId:StackId,
-					LayerIds:[LayerId],
-					InstanceType:options.size,
-					AvailabilityZone:availability_zone
-				};
+	var startIn = function(count, zones, options){
+		fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
+			if(LayerId==null){
+				console.log('Layer ' + layer + ' not found');
+				process.exit(1);
+			}
+			for(var i=0; i < count; i++){
+				var AvailabilityZone = zones[i%zones.length];
+				console.log('Creating instance ' + i + ' in ' + AvailabilityZone);
 				
-				if(typeof options.scalingType != 'undefined'){
-					params.AutoScalingType = options.scalingType;
-				}
-		
-				if(typeof options.keypair != 'undefined'){
-					params.SshKeyName=options.keypair;
-				}
-		
-				if(typeof options.ami != 'undefined'){
-					params.AmiId=options.ami;
-				}
+				options.hostname = options.prefix+'-'+i;
 				
-				if(typeof options.hostname != 'undefined'){
-					params.Hostname=options.hostname;
-				}
-				
-				opsworks.createInstance(params, function(error, data){
-					if(error){
-						console.log(error);
-						process.exit(1);
-					}
-					else{
-						console.log('Instance %s Created', data.InstanceId);
-						if(options.start){
-							console.log("want to start instance now");
-							opsworks.startInstance({InstanceId:data.InstanceId}, function(error, data){
-								if(error){
-									console.log(error);
-									process.exit(1);
-								}
-								
-								console.log("Instance starting");
-							});
-						}
-					}
-				});
-			});
-		}
-	});
+				util.createInstance(StackId, LayerId, AvailabilityZone, options);
+			}
+		});
+	};
+	
+	if(typeof options.availabilityZone != 'undefined'){
+		util.validateAvailabilityZone(options.availabilityZone, function(valid){
+			if(!valid){
+				console.log('%s is not a valid availability zone', options.availabilityZone);
+				process.exit(1);
+			}
+			else{
+				// Create Instance
+				console.log("Starting " + options.count + " in " + options.availabilityZone);
+				startIn(options.count, [options.availabilityZone], options);
+			}
+		});
+	}
+	else if(options.distribute){
+		console.log("Starting " + options.count + " in distributed mode");
+		
+		fetcher.getAvailabilityZones(function(data){
+			var zones = new Array();
+			for(var i=0; i<data.AvailabilityZones.length; i++){
+				zones.push(data.AvailabilityZones[i].ZoneName);
+			}
+			
+			startIn(options.count, zones, options);
+		});
+	}
+	else{
+		console.log('You must either use --distribute or assign an availability zone using --availability-zone');
+		process.exit(1);
+	}
 });
 
 app.command('stop')
