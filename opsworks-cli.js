@@ -123,7 +123,6 @@ app.command('add [stack] [layer]')
 			}
 			for(var i=0; i < count; i++){
 				var AvailabilityZone = zones[i%zones.length];
-				console.log('Creating instance ' + i + ' in ' + AvailabilityZone);
 				
 				options.hostname = options.prefix+'-'+i;
 				
@@ -209,7 +208,7 @@ app.command('stop')
 		stop(options.id);
 	}
 	else if(typeof options.stack != 'undefined' && typeof options.layer != 'undefined' && typeof options.hostname != 'undefined'){
-		fetcher.getInstance({StackName:stack, LayerName:layer, Hostname:hostname}, function(instance){
+		fetcher.getInstance({StackName:options.stack, LayerName:options.layer, Hostname:options.hostname}, function(instance){
 			if(instance==null){
 				console.log('Instance %s could not be found', hostname);
 				process.exit(1);
