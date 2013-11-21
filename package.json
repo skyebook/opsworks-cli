@@ -5,6 +5,7 @@
 	"description": "Tools for administering AWS OpsWorks layers.",
 	"dependencies": {
 		"aws-sdk": "1.10.0",
-		"commander": "2.0.0"
+		"commander": "2.0.0",
+		"applescript": "0.2.1"
 	}
 }

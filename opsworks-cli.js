@@ -1,8 +1,8 @@
 // Third-Party Dependencies
 var app = require('commander');
 var AWS = require('aws-sdk');
+var applescript = require("applescript");
 var fs = require('fs');
-var spawn = require('child_process').spawn;
 
 // Internal Dependencies
 var config = require('./config');
@@ -48,44 +48,44 @@ app.command('list [stack] [layer]')
 	});
 });
 
-app.command('ssh [stack] [layer] [hostname]')
+app.command('ssh [stack] [layer]')
 .description('Log into in an instance')
 .option('-i, --identity <identity>', 'The location of the key to use')
 .action(function(stack, layer, hostname, options){
-	console.log('Creating an SSH connection to %s::%s::%s', stack, layer, hostname);
+	console.log('Creating an SSH connection to all instances on %s::%s', stack, layer);
 	
-	fetcher.getInstance({StackName:stack, LayerName:layer, Hostname:hostname}, function(instance){
-		if(instance==null){
-			console.log('Instance %s could not be found', hostname);
+	fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
+		if(LayerId==null){
+			console.log('Layer ' + layer + ' not found');
 			process.exit(1);
 		}
-		
-		//console.log(instance);
-		if(options.identity){
-			//var command = 'ssh -i '+options.i +' ubuntu@'+instance.PublicIp;
-			//console.log('Running `%s`', command);
-			var args = [
-			'-tt',
-			'-i' + options.identity,
-			'ubuntu@'+instance.PublicIp
-			];
-			var ssh = spawn('ssh', args);
 			
-			ssh.on('exit', process.exit);
-
-			ssh.stdout.pipe(process.stdout);
-			ssh.stderr.pipe(process.stderr);
-
-			process.stdin.pipe(ssh.stdin);
-			//process.stdin.resume();
-			
-			ssh.on('error', function(error){
+		opsworks.describeInstances({LayerId:LayerId}, function(error, data){
+			if(error){
 				console.log(error);
-			});
-		}
-		else{
-			console.log("No identity provided");
-		}
+			}
+			else{
+				var hosts = new Array();
+				for(var i=0; i<data.Instances.length; i++){
+					var instance = data.Instances[i];
+					if(instance.Status=='online'){
+						hosts.push(data.Instances[i].PublicIp)
+					}
+				}
+			
+				console.log("Reaching out to %s hosts", hosts.length);
+				
+				applescript.execFile('./bin/ssh.applescript', hosts, function(scriptError, scriptData){
+					if(scriptError){
+						console.log(scriptError);
+					}
+					else{
+						console.log("Connected");
+					}
+				});
+				
+			}
+		});
 	});
 });
 
