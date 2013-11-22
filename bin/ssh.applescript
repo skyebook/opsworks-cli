@@ -4,7 +4,7 @@
 
 on run argv
 	if (count of argv) = 0 then
-		return "fuck"
+		return "No hostname arguments supplied"
 	else
 		set hostnames to argv
 		--return "good"
@@ -30,12 +30,14 @@ on run argv
 			
 			set num_hosts to count of hostnames
 			
+			-- Create the windows
+			
 			repeat with n from 1 to num_hosts
 				if n - 1 is num_hosts / 2 then
-					-- move to lower split
+					-- move across
 					tell i term application "System Events" to keystroke "]" using command down
 				else if n > 1 then
-					-- split vertically
+					-- split horizontally
 					tell i term application "System Events" to keystroke "D" using command down
 				end if
 				delay 1
