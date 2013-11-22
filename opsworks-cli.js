@@ -1,7 +1,9 @@
 // Third-Party Dependencies
 var app = require('commander');
 var AWS = require('aws-sdk');
-var applescript = require("applescript");
+var applescript = require('applescript');
+
+// Node Stuff
 var fs = require('fs');
 
 // Internal Dependencies
@@ -75,7 +77,8 @@ app.command('ssh [stack] [layer]')
 			
 				console.log("Reaching out to %s hosts", hosts.length);
 				
-				applescript.execFile('./bin/ssh.applescript', hosts, function(scriptError, scriptData){
+				// The applescript module requires an exact path, le sigh
+				applescript.execFile(__dirname+'/bin/ssh.applescript', hosts, function(scriptError, scriptData){
 					if(scriptError){
 						console.log(scriptError);
 					}
