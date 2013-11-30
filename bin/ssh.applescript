@@ -38,6 +38,9 @@ on run argv
 					tell i term application "System Events" to keystroke "D" using command down
 				end if
 				
+				-- Add some delay to give iTerm time to switch to the next pane
+				delay 0.1
+				
 				-- Put the SSH comment in the terminal and use a backslash as a hack so that it doesn't run
 				tell the current session to write text "ssh -o StrictHostKeyChecking=no -i ~/.ssh/PlayKey.pem ubuntu@" & (item n of hostnames) & "\\"
 			end repeat
