@@ -52,6 +52,9 @@ on run argv
 			
 			--  Connect the SSH sessions (this finishes the command that we left hanging before with the backslash)
 			tell i term application "System Events" to keystroke return
+			
+			-- Zoom the window
+			tell i term application "System Events" to keystroke "=" using {option down, command down}
 		end tell
 	end tell
 end run
