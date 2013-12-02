@@ -27,6 +27,25 @@ var opsworks = new AWS.OpsWorks();
 
 app.version('0.0.1');
 
+app.command('describe [stack]')
+.description('List the layers in a stack')
+.action(function(stack, options){
+		
+	fetcher.getStackId({StackName:stack}, function(StackId){
+			
+		opsworks.describeLayers({StackId:StackId}, function(error, data){
+			if(error){
+				console.log(error);
+			}
+			else{
+				data.Layers.forEach(function(layer, index, layers){
+					out.layerOverview(layer);
+				});
+			}
+		});
+	});
+});
+
 app.command('list [stack] [layer]')
 .description('List the instances in a layer')
 .action(function(stack, layer, options){
