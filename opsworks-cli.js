@@ -115,7 +115,7 @@ app.command('add [stack] [layer]')
 .description('Add one or more instances to a layer')
 .option('--start', 'Starts the instance immediately.')
 .option('-h, --hostname [hostname]', 'Supply the hostname to be used for the instance.')
-.option('-p, --prefix [prefix]', 'Supply the hostname to be used for the instance.', '')
+.option('-p, --prefix [prefix]', 'Supply a prefix to be used for the instance hostname.', '')
 .option('-k, --keypair [keypair]', 'Specify which key pair to use when logging into the instance.')
 .option('-a, --ami [ami]', 'Specify a custom AMI to boot.')
 .option('-s,--size [size]', 'Specify the size of the EC2 instance.', 'c1.medium')
@@ -184,64 +184,63 @@ app.command('add [stack] [layer]')
 	}
 });
 
-app.command('stop')
+app.command('stop [stack] [layer]')
 .description('Stops an instance either by using Stack/Layer/Hostname, or directly via instance ID')
-.option('--stack [stack]', 'The stack containing the instance to stop. Must be used in conjunction with the layer and hostname options.')
-.option('--layer [layer]', 'The layer containing the instance to stop. Must be used in conjunction with the stack and hostname options.')
-.option('--hostname [hostname]', 'The hostname of the instance to stop. Must be used in conjunction with the stack and layer options.')
-.option('--id [id]', 'The UUID of the instance to stop')
+.option('-p, --prefix [prefix]', 'Instances with a hostname starting with this prefix will be stopped')
+.option('--all', 'All instances in this layer will be stopped', '')
 .option('--delete', 'Deletes the instance immediately. Be careful.')
-.action(function(options){
+.action(function(stack, layer, options){
 	
-	var deleteInstance = function(InstanceId){
-		opsworks.deleteInstance({InstanceId:InstanceId}, function(error, data){
-			if(error){
-				console.log(error);
-				process.exit(1);
-			}
-			
-			console.log('Instance Deleted');
-		});
-	};
+	if(!options.all && typeof options.prefix == 'undefined'){
+		console.log('Need to pass a hostname prefix ');
+	}
 	
-	var stop = function(InstanceId){
-		console.log('Stopping %s, this may take a while..', InstanceId);
-		opsworks.stopInstance({InstanceId:InstanceId}, function(error, data){
-			if(error){
-				console.log('Failed to stop instance %s (%s)', hostname, instance.InstanceId);
-				process.exit(1);
-			}
-			
-			console.log('Stopped %s', InstanceId);
-				
-			if(options.delete){
-				console.log("Intent to delete");
-				deleteInstance(InstanceId);
-			}
-		});
-	};
-	
-	if(typeof options.id != 'undefined'){
-		if(!util.validateUUID(options.id)){
-			console.log('%s is not a valid instance ID', options.id);
+	fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
+		if(LayerId==null){
+			console.log('Layer ' + layer + ' not found');
 			process.exit(1);
 		}
-		
-		stop(options.id);
-	}
-	else if(typeof options.stack != 'undefined' && typeof options.layer != 'undefined' && typeof options.hostname != 'undefined'){
-		fetcher.getInstance({StackName:options.stack, LayerName:options.layer, Hostname:options.hostname}, function(instance){
-			if(instance==null){
-				console.log('Instance %s could not be found', hostname);
-				process.exit(1);
+			
+		opsworks.describeInstances({LayerId:LayerId}, function(error, data){
+			if(error){
+				console.log(error);
 			}
-		
-			stop(instance.InstanceId);
+			else{
+				var hosts = new Array();
+				for(var i=0; i<data.Instances.length; i++){
+					var instance = data.Instances[i];
+					if(options.all || instance.Hostname.indexOf(options.prefix)===0){
+						
+						console.log("Stopping %s", instance.Hostname);
+						opsworks.stopInstance({InstanceId:instance.InstanceId}, function(error, data){
+							if(error){
+								console.log('Failed to stop instance %s (%s)', instance.Hostname, instance.InstanceId);
+								process.exit(1);
+							}
+			
+							console.log('Stopped %s', instance.InstanceId);
+				
+							if(options.delete){
+								console.log("Intent to delete");
+								deleteInstance(instance.InstanceId);
+							}
+						});
+					}
+				}
+			}
 		});
-	}
-	else{
-		console.log('Either an instance ID or (stack & layer & hostname) are required.');
-	}
+	});
+	
+	// var deleteInstance = function(InstanceId){
+	// 	opsworks.deleteInstance({InstanceId:InstanceId}, function(error, data){
+	// 		if(error){
+	// 			console.log(error);
+	// 			process.exit(1);
+	// 		}
+	// 		
+	// 		console.log('Instance Deleted');
+	// 	});
+	// };
 });
 
 app.command('start [stack] [layer] [hostname]')
