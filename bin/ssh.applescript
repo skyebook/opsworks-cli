@@ -21,6 +21,13 @@ on run argv
 			
 			launch session "Default Session"
 			
+			-- If we're only opening a single session, return before setting up a multi-column layout
+			if count of hostnames is 1 then
+				tell the current session to write text "ssh -o StrictHostKeyChecking=no -i ~/.ssh/PlayKey.pem ubuntu@" & (item 1 of hostnames) & "\\"
+				tell i term application "System Events" to keystroke return
+				return
+			end if
+			
 			-- split horizontally
 			tell i term application "System Events" to keystroke "d" using command down
 			-- move to upper split
