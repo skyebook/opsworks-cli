@@ -70,9 +70,12 @@ app.command('list [stack] [layer]')
 });
 
 app.command('ssh [stack] [layer]')
-.description('Log into in an instance')
+.description('Log into a single instance or an entire layer')
 .option('-i, --identity <identity>', 'The location of the key to use')
-.action(function(stack, layer, hostname, options){
+.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
+.action(function(stack, layer, options){
+	if(typeof options.hostname != 'undefined'){
+	}
 	console.log('Creating an SSH connection to all instances on %s::%s', stack, layer);
 	
 	fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
@@ -90,7 +93,19 @@ app.command('ssh [stack] [layer]')
 				for(var i=0; i<data.Instances.length; i++){
 					var instance = data.Instances[i];
 					if(instance.Status=='online'){
-						hosts.push(data.Instances[i].PublicIp)
+						
+						// Are we only looking for one instance and is this the one?
+						if(typeof options.hostname != 'undefined'){
+							console.log("Hostname is " + options.hostname);
+							console.log("Instance is " + instance.Hostname);
+							if(instance.Hostname === options.hostname){
+								hosts.push(data.Instances[i].PublicIp);
+								break;
+							}
+						}
+						else{
+							hosts.push(data.Instances[i].PublicIp);
+						}
 					}
 				}
 			
