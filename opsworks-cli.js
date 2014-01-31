@@ -185,10 +185,9 @@ app.command('add [stack] [layer]')
 });
 
 app.command('stop [stack] [layer]')
-.description('Stops an instance either by using Stack/Layer/Hostname, or directly via instance ID')
+.description('Stops an instance either by using Stack/Layer/Hostname')
 .option('-p, --prefix [prefix]', 'Instances with a hostname starting with this prefix will be stopped')
 .option('--all', 'All instances in this layer will be stopped', '')
-.option('--delete', 'Deletes the instance immediately. Be careful.')
 .action(function(stack, layer, options){
 	
 	if(!options.all && typeof options.prefix == 'undefined'){
@@ -217,12 +216,47 @@ app.command('stop [stack] [layer]')
 								console.log('Failed to stop instance %s (%s)', instance.Hostname, instance.InstanceId);
 								process.exit(1);
 							}
+						});
+					}
+				}
+			}
+		});
+	});
+});
+
+app.command('delete [stack] [layer]')
+.description('Deletes stopped instances in a layer by hostname prefix or an \'all\' flag')
+.option('-p, --prefix [prefix]', 'Stopped instances with a hostname starting with this prefix will be deleted')
+.option('--all-stopped', 'All stopped instances in this layer will be deleted', '')
+.action(function(stack, layer, options){
+	
+	if(!options.allStopped && typeof options.prefix == 'undefined'){
+		console.log('Need to pass a hostname prefix ');
+	}
+	
+	fetcher.getLayerId({StackName:stack, LayerName:layer}, function(StackId, LayerId){
+		if(LayerId==null){
+			console.log('Layer ' + layer + ' not found');
+			process.exit(1);
+		}
 			
-							console.log('Stopped %s', instance.InstanceId);
-				
-							if(options.delete){
-								console.log("Intent to delete");
-								deleteInstance(instance.InstanceId);
+		opsworks.describeInstances({LayerId:LayerId}, function(error, data){
+			if(error){
+				console.log(error);
+			}
+			else{
+				var hosts = new Array();
+				for(var i=0; i<data.Instances.length; i++){
+					var instance = data.Instances[i];
+					
+					if(instance.Status=="stopped" && (options.allStopped || instance.Hostname.indexOf(options.prefix)===0)){
+						
+						console.log("Deleting %s", instance.Hostname);
+						
+						opsworks.deleteInstance({InstanceId:instance.InstanceId}, function(error, data){
+							if(error){
+								console.log('Failed to delete instance %s (%s)', instance.Hostname, instance.InstanceId);
+								process.exit(1);
 							}
 						});
 					}
@@ -230,17 +264,6 @@ app.command('stop [stack] [layer]')
 			}
 		});
 	});
-	
-	// var deleteInstance = function(InstanceId){
-	// 	opsworks.deleteInstance({InstanceId:InstanceId}, function(error, data){
-	// 		if(error){
-	// 			console.log(error);
-	// 			process.exit(1);
-	// 		}
-	// 		
-	// 		console.log('Instance Deleted');
-	// 	});
-	// };
 });
 
 app.command('start [stack] [layer] [hostname]')
