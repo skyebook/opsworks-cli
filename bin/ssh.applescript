@@ -21,21 +21,27 @@ on run argv
 			
 			launch session "Default Session"
 			
+			-- This creates one column
+			
 			-- split horizontally
 			tell i term application "System Events" to keystroke "d" using command down
 			-- move to upper split
-			tell i term application "System Events" to keystroke "[" using command down
+			tell i term application "System Events" to key code 123 using {option down, command down}
 			
 			set num_hosts to count of hostnames
 			
 			-- Create the panes
 			repeat with n from 1 to num_hosts
-				if n - 1 is num_hosts / 2 then
-					-- move across
-					tell i term application "System Events" to keystroke "]" using command down
-				else if n > 1 then
-					-- split horizontally
+				-- Split downward
+				if n > 1 and n < num_hosts then
 					tell i term application "System Events" to keystroke "D" using command down
+				end if
+				
+				if n mod 2 is 1 then
+					-- move across
+					tell i term application "System Events" to key code 124 using {option down, command down}
+				else --if n is not num_hosts then
+					tell i term application "System Events" to key code 124 using {option down, command down}
 				end if
 				
 				-- Add some delay to give iTerm time to switch to the next pane
