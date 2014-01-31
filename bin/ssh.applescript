@@ -21,8 +21,6 @@ on run argv
 			
 			launch session "Default Session"
 			
-			-- This creates one column
-			
 			-- split horizontally
 			tell i term application "System Events" to keystroke "d" using command down
 			-- move to upper split
@@ -39,8 +37,8 @@ on run argv
 				
 				if n mod 2 is 1 then
 					-- move across
-					tell i term application "System Events" to key code 124 using {option down, command down}
-				else --if n is not num_hosts then
+					tell i term application "System Events" to key code 123 using {option down, command down}
+				else
 					tell i term application "System Events" to key code 124 using {option down, command down}
 				end if
 				
