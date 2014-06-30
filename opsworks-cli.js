@@ -284,31 +284,31 @@ app.command('delete [stack] [layer]')
 app.command('start [stack] [layer] [hostname]')
 .description('Start an instance')
 .action(function(stack, layer, hostname, options){
-	console.log('Starting %s::%s::%s', stack, layer, hostname);
+	console.log('NOT IMPLEMENTED:\tStarting %s::%s::%s', stack, layer, hostname);
 });
 
 app.command('deploy [app] [stack] [layer]')
 .description('Deploy an application to a layer.')
 .action(function(app, stack, layer, options){
-	console.log('Deploying %s on %s::%s', app, stack, layer);
+	console.log('NOT IMPLEMENTED:\tDeploying %s on %s::%s', app, stack, layer);
 });
 
 app.command('undeploy [app] [stack] [layer]')
 .description('Undeploys an application from a layer')
 .action(function(app, stack, layer, options){
-	console.log('Undeploying %s from %s::%s', app, stack, layer);
+	console.log('NOT IMPLEMENTED:\tUndeploying %s from %s::%s', app, stack, layer);
 });
 
 app.command('update-cookbooks [stack] [layer]')
 .description('Updates the custom cookbooks within a layer')
 .action(function(stack, layer, options){
-	console.log('Updating custom cookbooks in %s::%s', stack, layer);
+	console.log('NOT IMPLEMENTED:\tUpdating custom cookbooks in %s::%s', stack, layer);
 });
 
 app.command('exec-recipe [recipe] [stack] [layer]')
 .description('Executes a recipe on instances within a layer')
 .action(function(recipe, stack, layer, options){
-	console.log('Executing recipe %s on %s::%s', recipe, stack, layer);
+	console.log('NOT IMPLEMENTED:\tExecuting recipe %s on %s::%s', recipe, stack, layer);
 });
 
 // Process the arguments (This needs to happen after all of the commands are declared)
