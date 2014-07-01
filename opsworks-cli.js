@@ -25,7 +25,7 @@ AWS.config.update(awsOptions);
 
 var opsworks = new AWS.OpsWorks();
 
-app.version('0.0.1');
+app.version(require('./package.json').version);
 
 app.command('describe [stack]')
 .description('List the layers in a stack')
