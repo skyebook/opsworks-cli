@@ -1,0 +1,8 @@
+{
+	"ssh":{
+		"options":{
+			"StrictHostKeyChecking":"yes"
+		},
+		"identity": "~/.ssh/some_key.pem"
+	}
+}

@@ -15,6 +15,9 @@ var fetcher = require('./lib/fetcher');
 var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 
+// Load configuration
+config.load();
+
 if(AWS_ACCESS_KEY_ID === undefined || AWS_SECRET_ACCESS_KEY === undefined){
 	console.log("AWS credentials must be set");
 	process.exit(1);
@@ -111,7 +114,25 @@ app.command('ssh [stack] [layer]')
 			
 				console.log("Reaching out to %s hosts", hosts.length);
 				
-				var sshCommand = __dirname+"/bin/ssh.sh -n " + layer + " -u ubuntu -i " + DEFAULT_SSH_KEY + " " + hosts.join(" ");
+				// Start the options string with a space so it doesn't collide with the preceding argument
+				var sshOptionsString = " ";
+				var sshOpts = config.settings.ssh.options;
+				if(sshOpts !== undefined){
+					for(var key in sshOpts){
+						if(sshOpts.hasOwnProperty(key)){
+							sshOptionsString += "-o "+key+"="+sshOpts[key];
+						}
+					}
+				}
+				
+				// Get the default key from the config file
+				var keyToUse = config.settings.ssh.identity;
+				// Override the default if supplied as a command-line argument
+				if(typeof options.identity != 'undefined'){
+					keyToUse = options.identity;
+				}
+				
+				var sshCommand = __dirname+"/bin/ssh.sh -n " + layer + " -u ubuntu" + sshOptionsString + " -i " + keyToUse + " " + hosts.join(" ");
 				
 				exec_sh(sshCommand);
 			}
