@@ -1,2 +1,3 @@
-#!/bin/sh
-node /Users/skyebook/Documents/opsworks-cli/opsworks-cli.js "$@"
+#!/bin/bash
+dir=$(npm -g root)
+node $dir/opsworks-cli/opsworks-cli.js "$@"
