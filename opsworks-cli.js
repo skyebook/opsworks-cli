@@ -15,7 +15,7 @@ var fetcher = require('./lib/fetcher');
 var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 
-if(typeof AWS_ACCESS_KEY_ID == 'undefined' || typeof AWS_SECRET_ACCESS_KEY == 'undefined'){
+if(AWS_ACCESS_KEY_ID === undefined || AWS_SECRET_ACCESS_KEY === undefined){
 	console.log("AWS credentials must be set");
 	process.exit(1);
 }
