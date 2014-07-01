@@ -1,7 +1,7 @@
 // Third-Party Dependencies
 var app = require('commander');
 var AWS = require('aws-sdk');
-var applescript = require('applescript');
+var exec_sh = require('exec-sh');
 
 // Node Stuff
 var fs = require('fs');
@@ -111,16 +111,9 @@ app.command('ssh [stack] [layer]')
 			
 				console.log("Reaching out to %s hosts", hosts.length);
 				
-				// The applescript module requires an exact path, le sigh
-				applescript.execFile(__dirname+'/bin/ssh.applescript', hosts, function(scriptError, scriptData){
-					if(scriptError){
-						console.log(scriptError);
-					}
-					else{
-						console.log("Connected");
-					}
-				});
+				var sshCommand = __dirname+"/bin/ssh.sh -n " + layer + " -u ubuntu -i " + DEFAULT_SSH_KEY + " " + hosts.join(" ");
 				
+				exec_sh(sshCommand);
 			}
 		});
 	});
