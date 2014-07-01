@@ -99,8 +99,8 @@ app.command('ssh [stack] [layer]')
 						
 						// Are we only looking for one instance and is this the one?
 						if(typeof options.hostname != 'undefined'){
-							console.log("Hostname is " + options.hostname);
-							console.log("Instance is " + instance.Hostname);
+							//console.log("Hostname is " + options.hostname);
+							//console.log("Instance is " + instance.Hostname);
 							if(instance.Hostname === options.hostname){
 								hosts.push(data.Instances[i].PublicIp);
 								break;
@@ -112,7 +112,7 @@ app.command('ssh [stack] [layer]')
 					}
 				}
 			
-				console.log("Reaching out to %s hosts", hosts.length);
+				//console.log("Reaching out to %s hosts", hosts.length);
 				
 				// Start the options string with a space so it doesn't collide with the preceding argument
 				var sshOptionsString = " ";
