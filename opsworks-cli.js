@@ -7,16 +7,13 @@ var exec_sh = require('exec-sh');
 var fs = require('fs');
 
 // Internal Dependencies
-var config = require('./config');
+var config = require('./config.json');
 var out = require('./lib/out');
 var util = require('./lib/util')
 var fetcher = require('./lib/fetcher');
 
 var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
 var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-
-// Load configuration
-config.load();
 
 if(AWS_ACCESS_KEY_ID === undefined || AWS_SECRET_ACCESS_KEY === undefined){
 	console.log("AWS credentials must be set");
@@ -116,7 +113,7 @@ app.command('ssh [stack] [layer]')
 				
 				// Start the options string with a space so it doesn't collide with the preceding argument
 				var sshOptionsString = " ";
-				var sshOpts = config.settings.ssh.options;
+				var sshOpts = config.ssh.options;
 				if(sshOpts !== undefined){
 					for(var key in sshOpts){
 						if(sshOpts.hasOwnProperty(key)){
@@ -126,7 +123,7 @@ app.command('ssh [stack] [layer]')
 				}
 				
 				// Get the default key from the config file
-				var keyToUse = config.settings.ssh.identity;
+				var keyToUse = config.ssh.identity;
 				// Override the default if supplied as a command-line argument
 				if(typeof options.identity != 'undefined'){
 					keyToUse = options.identity;
@@ -137,6 +134,53 @@ app.command('ssh [stack] [layer]')
 				exec_sh(sshCommand);
 			}
 		});
+	});
+});
+
+app.command('config [key] [value]')
+.description('Update settings in the OpsWorks config file')
+.action(function(key, value, options){
+	
+	if(key === undefined || value === undefined){
+		console.log('A key and value must be defined');
+		process.exit(1);
+	}
+	
+	var keyPaths = key.split(".");
+	
+	var walk = function(currentPath, next, valueToSet){
+		if(typeof currentPath[next] == 'undefined'){
+			currentPath[next] = {};
+		}
+		
+		if(arguments.length==3){
+			currentPath[next] = valueToSet;
+		}
+		
+		return currentPath[next];
+	};
+	
+	var currentlyAt = config;
+	keyPaths.forEach(function(element, index, array){
+		console.log('Descending to ' + element);
+		if(index==array.length-1){
+			currentlyAt = walk(currentlyAt, element, value);
+		}
+		else{
+			currentlyAt = walk(currentlyAt, element);
+		}
+	});
+	
+	//config[key] = value;
+	
+	fs.writeFile(__dirname+'/config.json', JSON.stringify(config, null, '\t'), function(err){
+		if(err){
+			console.log('Config file could not be saved');
+			console.log(err.message);
+		}
+		else{
+			console.log('Config file updated');
+		}
 	});
 });
 
