@@ -193,7 +193,8 @@ app.command('add [stack] [layer]')
 .option('-a, --ami [ami]', 'Specify a custom AMI to boot.')
 .option('-s,--size [size]', 'Specify the size of the EC2 instance.', 'c1.medium')
 .option('-c,--count [count]', 'Specify the number of EC2 instances to add', 1)
-.option('--scaling-type [scaling-type]', 'Specify the scaling type of the instance (accepts \'timer\' or \'load\')')
+// Scaling Type not yet supported
+//.option('--scaling-type [scaling-type]', 'Specify the scaling type of the instance (accepts \'timer\' or \'load\')')
 .option('--availability-zone [availability-zone]', 'Specify the availability zone if the distribute flag has not been used')
 .option('--distribute', 'Use this flag to automatically distribute nodes across all of the stack\'s availability zones')
 .action(function(stack, layer, options){	
