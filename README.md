@@ -1,6 +1,6 @@
 # OpsWorks CLI
 
-The Command Line Interface you wish Amazon shipped for OpsWorks.
+The Command Line Interface you wish Amazon shipped for [OpsWorks](http://aws.amazon.com/opsworks/).
 
 ## Installation
 
@@ -8,7 +8,10 @@ The Command Line Interface you wish Amazon shipped for OpsWorks.
 
 ## Usage
 
-### Check dat stack
+Before using this tool, it is important to know that unique naming conventions are expected throughout our OpsWorks configuration.
+Having stacks with the same name or layers of the same name will confuse this tool as it works on the human-readable labels assigned rather than the UUID's assigned by AWS internally.
+
+### Describe stack layers
 
 This will list the layers in a stack
 
@@ -46,11 +49,12 @@ For example, running the above in **us-east** will result in the following insta
 
 ### SSH
 
-`opsworks ssh` provides the ability to SSH into one or more instances.  This works by starting a `tmux` session, which must be available on your system.
+`opsworks ssh` provides the ability to SSH into one or more instances.  This works by starting a `[tmux](http://en.wikipedia.org/wiki/Tmux)` session, which must be available on your system.
 
-Most Linux distributions come with tmux installed; There is a Homebrew formula available for OS X:
+Most Linux distributions have tmux available in their default repositories; there is a [Homebrew](http://brew.sh) formula available for OS X as well:
 
-	OS X	brew install tmux
+	Ubuntu/Debian	apt-get install tmux
+	OS X			brew install tmux
 
 #### Connect to a single instance
 
@@ -99,3 +103,8 @@ Only stopped instances can be deleted.  Similar to stopping, you can delete inst
 #### Deleting instances matching a prefix
 
 	opsworks delete my_stack my_layer --prefix git_6e84r37
+
+
+## License
+
+MIT
