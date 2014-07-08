@@ -1,8 +1,12 @@
 {
 	"name": "opsworks-cli",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"author": "Skye Book <skye@skyebook.net>",
 	"description": "Perform common OpsWorks tasks from the command line",
+	"repository":{
+		"type":"git",
+		"url":"https://github.com/skyebook/opsworks-cli"
+	},
 	"keywords": [
 		"AWS",
 		"OpsWorks",
