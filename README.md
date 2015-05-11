@@ -29,13 +29,13 @@ You can use `opsworks-cli` to quickly add instances to a layer.  The basic synta
 
 	opsworks add [stack] [layer]
 
-#### Add instances across all Availability Zone's
+#### Add instances across all Availability Zones
 
 The `opsworks add` command provides a flexible way to create new instances.
 
 	opsworks add my_stack my_layer --count 6 --size c3.large --prefix hostname_prefix --distribute --start
 
-This command will create *and start* (via the --start flag) 6 new instances across the layer's Availability Zone's (via the --distribute flag).
+This command will create *and start* (via the --start flag) 6 new instances across the layer's Availability Zones (via the --distribute flag).
 Instance hostnames are the concatenation of the `prefix` argument and the number of the created instance.
 
 For example, running the above in **us-east** will result in the following instances being spawned:
