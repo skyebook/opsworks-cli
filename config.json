@@ -1,8 +1,12 @@
 {
-	"ssh":{
-		"options":{
-			"StrictHostKeyChecking":"yes"
-		},
-		"identity": "~/.ssh/some_key.pem"
-	}
+    "ssh": {
+        "options": {
+            "StrictHostKeyChecking": "yes"
+        },
+        "identity": "~/.ssh/some_key.pem",
+        "username": "ubuntu"
+    },
+    "aws": {
+        "region": "us-east-1"
+    }
 }
