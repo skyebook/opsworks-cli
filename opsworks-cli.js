@@ -253,6 +253,7 @@ app.command('config [key] [value]')
 
 		if (key === undefined || value === undefined) {
 			console.log('A key and value must be defined');
+			console.log(config.get());
 			process.exit(1);
 		}
 
