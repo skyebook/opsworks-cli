@@ -66,11 +66,19 @@ app.command('describe [stack]')
 app.command('list [stack] [layer]')
 	.description('List the instances in a layer')
 	.action(function(stack, layer, options) {
+		
+		if(typeof layer == "undefined"){
+			layer = stack;
+			stack = config.get('stack');
+		}
 
 		fetcher.getLayerId({
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
+			
+			
+			
 			if (LayerId == null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
@@ -168,14 +176,13 @@ app.command('ssh2 [stack] [layer]')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
 	.action(function(stack, layer, options) {
 		if (typeof options.hostname != 'undefined') {}
-		console.log('Creating an SSH connection to all instances on %s::%s', stack, layer);
-		console.log(stack);
 		if(typeof layer == "undefined"){
 			layer = stack;
 			stack = config.get('stack');
 		}
-		console.log(layer);
-
+		
+		console.log('Creating an SSH connection to first instance on %s::%s', stack, layer);
+		
 		fetcher.getLayerId({
 			StackName: stack,
 			LayerName: layer
@@ -233,7 +240,7 @@ app.command('ssh2 [stack] [layer]')
 					}
 
 					var sshCommand = "ssh " + sshOptionsString + " -i " + keyToUse + " " + ssh_username + '@' + hosts[0];
-
+					console.log(sshCommand);
 					exec_sh(sshCommand);
 				}
 			});
@@ -503,9 +510,49 @@ app.command('update-cookbooks [stack]')
 				else console.log(data); // successful response
 			});
 		});
+	});
 
+app.command('describe-deployments [deploymentId]')
+	.description('Updates the custom cookbooks within a stack')
+	.action(function(deploymentId, options) {
+		var stack = config.get('stack');
 
-		// console.log('NOT IMPLEMENTED:\tUpdating custom cookbooks in %s::%s', stack, layer);
+		fetcher.getStackId({
+			StackName: stack
+		}, function(StackId) {
+			var _params = {
+			//   DeploymentIds: [
+			//     '71796665-e306-42c9-a0be-b5f1f5201acf'
+			//   ],
+			  StackId: StackId
+				// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
+			};
+			opsworks.describeDeployments(_params, function(err, data) {
+			  if (err) console.log(err, err.stack); // an error occurred
+			  else     console.log(data);           // successful response
+			});
+		});
+	});
+app.command('describe-deployment [deploymentId]')
+	.description('Updates the custom cookbooks within a stack')
+	.action(function(deploymentId, options) {
+		var stack = config.get('stack');
+
+		fetcher.getStackId({
+			StackName: stack
+		}, function(StackId) {
+			var _params = {
+			//   DeploymentIds: [
+			//     '71796665-e306-42c9-a0be-b5f1f5201acf'
+			//   ],
+			  StackId: StackId
+				// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
+			};
+			opsworks.describeDeployments(_params, function(err, data) {
+			  if (err) console.log(err, err.stack); // an error occurred
+			  else     console.log(data.Deployments[0]);           // successful response
+			});
+		});
 	});
 
 app.command('exec-recipe [recipe] [stack] [layer]')
