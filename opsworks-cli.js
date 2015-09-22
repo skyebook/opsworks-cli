@@ -1,48 +1,41 @@
 // Third-Party Dependencies
+
+
+
 var app = require('commander');
-var AWS = require('aws-sdk');
 var exec_sh = require('exec-sh');
 
 // Node Stuff
 var fs = require('fs');
-var config = require('nconf');
 
 // Internal Dependencies
-// var config = require('./config.json');
+var config = require('./lib/config');
+process.env.AWS_PROFILE = config.get('profile');
+
+var AWS = require('aws-sdk');
+
 var out = require('./lib/out');
-var util = require('./lib/util')
+var util = require('./lib/util');
 var fetcher = require('./lib/fetcher');
 
-var AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-var AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-var USER_CONFIG_FILE = process.env.HOME + '/.opsworks_cli_config.json';
-
-config.argv()
-	.env()
-	.file({
-		file: USER_CONFIG_FILE
-	})
-	.defaults(require('./config.json'));
-
-if (AWS_ACCESS_KEY_ID === undefined || AWS_SECRET_ACCESS_KEY === undefined) {
-	console.log("AWS credentials must be set");
-	process.exit(1);
-}
-
 var awsOptions = {
-	"accessKeyId": AWS_ACCESS_KEY_ID,
-	"secretAccessKey": AWS_SECRET_ACCESS_KEY,
-	"region": config.get('aws:region')
+	"region": config.get('aws:region'),
+	"profile": config.get('profile')
 };
+
 AWS.config.update(awsOptions);
 
 var opsworks = new AWS.OpsWorks();
 
-app.version(require('./package.json').version);
+app
+	.version(require('./package.json').version)
+	.option('-s, --stack <stack>', 'The stack to use');
+
 
 app.command('describe [stack]')
 	.description('List the layers in a stack')
 	.action(function(stack, options) {
+		// console.log(config);
 		stack = (stack) ? stack : config.get('stack');
 
 		fetcher.getStackId({
@@ -55,6 +48,7 @@ app.command('describe [stack]')
 				if (error) {
 					console.log(error);
 				} else {
+					console.log(stack);
 					data.Layers.forEach(function(layer, index, layers) {
 						out.layerOverview(layer);
 					});
@@ -66,8 +60,8 @@ app.command('describe [stack]')
 app.command('list [stack] [layer]')
 	.description('List the instances in a layer')
 	.action(function(stack, layer, options) {
-		
-		if(typeof layer == "undefined"){
+
+		if (typeof layer == "undefined") {
 			layer = stack;
 			stack = config.get('stack');
 		}
@@ -76,10 +70,10 @@ app.command('list [stack] [layer]')
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
-			
-			
-			
-			if (LayerId == null) {
+
+
+
+			if (LayerId === null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
 			}
@@ -110,7 +104,7 @@ app.command('ssh [stack] [layer]')
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
-			if (LayerId == null) {
+			if (LayerId === null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
 			}
@@ -121,7 +115,7 @@ app.command('ssh [stack] [layer]')
 				if (error) {
 					console.log(error);
 				} else {
-					var hosts = new Array();
+					var hosts = [];
 					for (var i = 0; i < data.Instances.length; i++) {
 						var instance = data.Instances[i];
 						if (instance.Status == 'online') {
@@ -176,18 +170,18 @@ app.command('ssh2 [stack] [layer]')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
 	.action(function(stack, layer, options) {
 		if (typeof options.hostname != 'undefined') {}
-		if(typeof layer == "undefined"){
+		if (typeof layer == "undefined") {
 			layer = stack;
 			stack = config.get('stack');
 		}
-		
+
 		console.log('Creating an SSH connection to first instance on %s::%s', stack, layer);
-		
+
 		fetcher.getLayerId({
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
-			if (LayerId == null) {
+			if (LayerId === null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
 			}
@@ -198,7 +192,7 @@ app.command('ssh2 [stack] [layer]')
 				if (error) {
 					console.log(error);
 				} else {
-					var hosts = new Array();
+					var hosts = [];
 					for (var i = 0; i < data.Instances.length; i++) {
 						var instance = data.Instances[i];
 						if (instance.Status == 'online') {
@@ -249,39 +243,7 @@ app.command('ssh2 [stack] [layer]')
 
 app.command('config [key] [value]')
 	.description('Update settings in the OpsWorks config file')
-	.action(function(key, value, options) {
-
-		if (key === undefined || value === undefined) {
-			console.log('A key and value must be defined');
-			console.log(config.get());
-			process.exit(1);
-		}
-
-		key = key.replace('.', ':');
-		config.set(key, value);
-
-		config.save(function(err) {
-			fs.readFile(USER_CONFIG_FILE, function(err, data) {
-				console.dir(JSON.parse(data.toString()))
-			});
-			if (err) {
-				console.log('Config file could not be saved');
-				console.log(err.message);
-			} else {
-				console.log('Config file updated');
-			}
-		});
-
-		// fs.writeFile(__dirname+'/config.json', JSON.stringify(config, null, '\t'), function(err){
-		// 	if(err){
-		// 		console.log('Config file could not be saved');
-		// 		console.log(err.message);
-		// 	}
-		// 	else{
-		// 		console.log('Config file updated');
-		// 	}
-		// });
-	});
+	.action(config.update);
 
 app.command('add [stack] [layer]')
 	.description('Add one or more instances to a layer')
@@ -315,7 +277,7 @@ app.command('add [stack] [layer]')
 				StackName: stack,
 				LayerName: layer
 			}, function(StackId, LayerId) {
-				if (LayerId == null) {
+				if (LayerId === null) {
 					console.log('Layer ' + layer + ' not found');
 					process.exit(1);
 				}
@@ -344,7 +306,7 @@ app.command('add [stack] [layer]')
 			console.log("Starting " + options.count + " in distributed mode");
 
 			fetcher.getAvailabilityZones(function(data) {
-				var zones = new Array();
+				var zones = [];
 				for (var i = 0; i < data.AvailabilityZones.length; i++) {
 					zones.push(data.AvailabilityZones[i].ZoneName);
 				}
@@ -371,7 +333,7 @@ app.command('stop [stack] [layer]')
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
-			if (LayerId == null) {
+			if (LayerId === null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
 			}
@@ -382,7 +344,13 @@ app.command('stop [stack] [layer]')
 				if (error) {
 					console.log(error);
 				} else {
-					var hosts = new Array();
+					var hosts = [];
+					var stopInstanceHandler = function(error, data) {
+						if (error) {
+							console.log('Failed to stop instance %s (%s)', instance.Hostname, instance.InstanceId);
+							process.exit(1);
+						}
+					};
 					for (var i = 0; i < data.Instances.length; i++) {
 						var instance = data.Instances[i];
 						if (options.all || instance.Hostname.indexOf(options.prefix) === 0) {
@@ -390,12 +358,7 @@ app.command('stop [stack] [layer]')
 							console.log("Stopping %s", instance.Hostname);
 							opsworks.stopInstance({
 								InstanceId: instance.InstanceId
-							}, function(error, data) {
-								if (error) {
-									console.log('Failed to stop instance %s (%s)', instance.Hostname, instance.InstanceId);
-									process.exit(1);
-								}
-							});
+							}, stopInstanceHandler);
 						}
 					}
 				}
@@ -417,7 +380,7 @@ app.command('delete [stack] [layer]')
 			StackName: stack,
 			LayerName: layer
 		}, function(StackId, LayerId) {
-			if (LayerId == null) {
+			if (LayerId === null) {
 				console.log('Layer ' + layer + ' not found');
 				process.exit(1);
 			}
@@ -428,7 +391,13 @@ app.command('delete [stack] [layer]')
 				if (error) {
 					console.log(error);
 				} else {
-					var hosts = new Array();
+					var hosts = [];
+					var deleteInstanceHandler = function(error, data) {
+						if (error) {
+							console.log('Failed to delete instance %s (%s)', instance.Hostname, instance.InstanceId);
+							process.exit(1);
+						}
+					};
 					for (var i = 0; i < data.Instances.length; i++) {
 						var instance = data.Instances[i];
 
@@ -438,12 +407,7 @@ app.command('delete [stack] [layer]')
 
 							opsworks.deleteInstance({
 								InstanceId: instance.InstanceId
-							}, function(error, data) {
-								if (error) {
-									console.log('Failed to delete instance %s (%s)', instance.Hostname, instance.InstanceId);
-									process.exit(1);
-								}
-							});
+							}, deleteInstanceHandler);
 						}
 					}
 				}
@@ -481,7 +445,7 @@ app.command('deploy [app] [stack] [layer]')
 					if (err) console.log(err, err.stack); // an error occurred
 					else console.log(data); // successful response
 				});
-			})
+			});
 
 		});
 	});
@@ -522,15 +486,15 @@ app.command('describe-deployments [deploymentId]')
 			StackName: stack
 		}, function(StackId) {
 			var _params = {
-			//   DeploymentIds: [
-			//     '71796665-e306-42c9-a0be-b5f1f5201acf'
-			//   ],
-			  StackId: StackId
-				// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
+				//   DeploymentIds: [
+				//     '71796665-e306-42c9-a0be-b5f1f5201acf'
+				//   ],
+				StackId: StackId
+					// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
 			};
 			opsworks.describeDeployments(_params, function(err, data) {
-			  if (err) console.log(err, err.stack); // an error occurred
-			  else     console.log(data);           // successful response
+				if (err) console.log(err, err.stack); // an error occurred
+				else console.log(data); // successful response
 			});
 		});
 	});
@@ -543,15 +507,15 @@ app.command('describe-deployment [deploymentId]')
 			StackName: stack
 		}, function(StackId) {
 			var _params = {
-			//   DeploymentIds: [
-			//     '71796665-e306-42c9-a0be-b5f1f5201acf'
-			//   ],
-			  StackId: StackId
-				// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
+				//   DeploymentIds: [
+				//     '71796665-e306-42c9-a0be-b5f1f5201acf'
+				//   ],
+				StackId: StackId
+					// DeploymentIds: ['71796665-e306-42c9-a0be-b5f1f5201acf']
 			};
 			opsworks.describeDeployments(_params, function(err, data) {
-			  if (err) console.log(err, err.stack); // an error occurred
-			  else     console.log(data.Deployments[0]);           // successful response
+				if (err) console.log(err, err.stack); // an error occurred
+				else console.log(data.Deployments[0]); // successful response
 			});
 		});
 	});
