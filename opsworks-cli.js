@@ -17,7 +17,7 @@ var AWS = require('aws-sdk');
 var out = require('./lib/out');
 var util = require('./lib/util');
 var fetcher = require('./lib/fetcher');
-// var fetcher = require('./lib/commands');
+var commands = require('./lib/commands');
 
 var awsOptions = {
 	"region": config.get('aws:region'),
@@ -517,10 +517,14 @@ app.command('exec-recipe [recipe] [stack] [layer]')
 	.action(function(recipe, stack, layer, options) {
 		console.log('NOT IMPLEMENTED:\tExecuting recipe %s on %s::%s', recipe, stack, layer);
 	});
-// 	
-// app.command('add-layer [jsonFile]')
-// 	.description('Add a layer to a stack based on a json file')
-// 	.action(commands.addLayer);
+	
+app.command('add-layer [jsonFile]')
+	.description('Add a Layer to a stack based on a json file')
+	.action(commands.addLayer);
+
+app.command('add-app [jsonFile]')
+	.description('Add an App to a stack based on a json file')
+	.action(commands.addApp);
 
 // Process the arguments (This needs to happen after all of the commands are declared)
 app.parse(process.argv);
