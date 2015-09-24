@@ -5,9 +5,6 @@
 var app = require('commander');
 var exec_sh = require('exec-sh');
 
-// Node Stuff
-var fs = require('fs');
-
 // Internal Dependencies
 var config = require('./lib/config');
 process.env.AWS_PROFILE = config.get('profile');
@@ -35,27 +32,7 @@ app
 
 app.command('describe')
 	.description('List the layers in a stack')
-	.action(function(options) {
-		var stack = config.get('stack');
-
-		fetcher.getStackId({
-			StackName: stack
-		}, function(StackId) {
-
-			opsworks.describeLayers({
-				StackId: StackId
-			}, function(error, data) {
-				if (error) {
-					console.log(error);
-				} else {
-					console.log(stack);
-					data.Layers.forEach(function(layer, index, layers) {
-						out.layerOverview(layer);
-					});
-				}
-			});
-		});
-	});
+	.action(commands.describe);
 
 app.command('list [layer]')
 	.description('List the instances in a layer')
