@@ -17,6 +17,7 @@ var AWS = require('aws-sdk');
 var out = require('./lib/out');
 var util = require('./lib/util');
 var fetcher = require('./lib/fetcher');
+// var fetcher = require('./lib/commands');
 
 var awsOptions = {
 	"region": config.get('aws:region'),
@@ -32,11 +33,10 @@ app
 	.option('-s, --stack <stack>', 'The stack to use');
 
 
-app.command('describe [stack]')
+app.command('describe')
 	.description('List the layers in a stack')
-	.action(function(stack, options) {
-		// console.log(config);
-		stack = (stack) ? stack : config.get('stack');
+	.action(function(options) {
+		var stack = config.get('stack');
 
 		fetcher.getStackId({
 			StackName: stack
@@ -57,15 +57,11 @@ app.command('describe [stack]')
 		});
 	});
 
-app.command('list [stack] [layer]')
+app.command('list [layer]')
 	.description('List the instances in a layer')
 	.action(function(stack, layer, options) {
-
-		if (typeof layer == "undefined") {
-			layer = stack;
-			stack = config.get('stack');
-		}
-
+		stack = config.get('stack');
+		
 		fetcher.getLayerId({
 			StackName: stack,
 			LayerName: layer
@@ -92,16 +88,16 @@ app.command('list [stack] [layer]')
 		});
 	});
 
-app.command('ssh [stack] [layer]')
+app.command('ssh [layer]')
 	.description('Log into a single instance or an entire layer')
 	.option('-i, --identity <identity>', 'The location of the key to use')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
-	.action(function(stack, layer, options) {
+	.action(function(layer, options) {
 		if (typeof options.hostname != 'undefined') {}
 		console.log('Creating an SSH connection to all instances on %s::%s', stack, layer);
 
 		fetcher.getLayerId({
-			StackName: stack,
+			StackName: config.get('stack'),
 			LayerName: layer
 		}, function(StackId, LayerId) {
 			if (LayerId === null) {
@@ -164,17 +160,15 @@ app.command('ssh [stack] [layer]')
 		});
 	});
 
-app.command('ssh2 [stack] [layer]')
+app.command('ssh2 [layer]')
 	.description('Log into a single instance or an entire layer')
 	.option('-i, --identity <identity>', 'The location of the key to use')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
-	.action(function(stack, layer, options) {
+	.action(function(layer, options) {
+		stack = config.get('stack');
+		
 		if (typeof options.hostname != 'undefined') {}
-		if (typeof layer == "undefined") {
-			layer = stack;
-			stack = config.get('stack');
-		}
-
+		
 		console.log('Creating an SSH connection to first instance on %s::%s', stack, layer);
 
 		fetcher.getLayerId({
@@ -210,8 +204,6 @@ app.command('ssh2 [stack] [layer]')
 							}
 						}
 					}
-
-					//console.log("Reaching out to %s hosts", hosts.length);
 
 					// Start the options string with a space so it doesn't collide with the preceding argument
 					var sshOptionsString = " ";
@@ -456,10 +448,10 @@ app.command('undeploy [app] [stack] [layer]')
 		console.log('NOT IMPLEMENTED:\tUndeploying %s from %s::%s', app, stack, layer);
 	});
 
-app.command('update-cookbooks [stack]')
+app.command('update-cookbooks')
 	.description('Updates the custom cookbooks within a stack')
-	.action(function(stack, options) {
-		stack = (stack) ? stack : config.get('stack');
+	.action(function(options) {
+		stack = config.get('stack');
 
 		fetcher.getStackId({
 			StackName: stack
@@ -525,6 +517,10 @@ app.command('exec-recipe [recipe] [stack] [layer]')
 	.action(function(recipe, stack, layer, options) {
 		console.log('NOT IMPLEMENTED:\tExecuting recipe %s on %s::%s', recipe, stack, layer);
 	});
+// 	
+// app.command('add-layer [jsonFile]')
+// 	.description('Add a layer to a stack based on a json file')
+// 	.action(commands.addLayer);
 
 // Process the arguments (This needs to happen after all of the commands are declared)
 app.parse(process.argv);
