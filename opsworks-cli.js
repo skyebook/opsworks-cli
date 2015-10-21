@@ -27,7 +27,8 @@ var opsworks = new AWS.OpsWorks();
 
 app
 	.version(require('./package.json').version)
-	.option('-s, --stack <stack>', 'The stack to use');
+	.option('-s, --stack <stack>', 'The stack to use')
+	.option('-v, --verbose', 'Show more details');
 
 
 app.command('describe')
