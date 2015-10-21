@@ -36,34 +36,7 @@ app.command('describe')
 
 app.command('list [layer]')
 	.description('List the instances in a layer')
-	.action(function(stack, layer, options) {
-		stack = config.get('stack');
-		
-		fetcher.getLayerId({
-			StackName: stack,
-			LayerName: layer
-		}, function(StackId, LayerId) {
-
-
-
-			if (LayerId === null) {
-				console.log('Layer ' + layer + ' not found');
-				process.exit(1);
-			}
-
-			opsworks.describeInstances({
-				LayerId: LayerId
-			}, function(error, data) {
-				if (error) {
-					console.log(error);
-				} else {
-					data.Instances.forEach(function(instance, index, instances) {
-						out.instanceOverview(instance);
-					});
-				}
-			});
-		});
-	});
+	.action(commands.list);
 
 app.command('ssh [layer]')
 	.description('Log into a single instance or an entire layer')
