@@ -115,74 +115,7 @@ app.command('ssh2 [layer]')
 	.description('Log into a single instance or an entire layer')
 	.option('-i, --identity <identity>', 'The location of the key to use')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
-	.action(function(layer, options) {
-		stack = config.get('stack');
-		
-		if (typeof options.hostname != 'undefined') {}
-		
-		console.log('Creating an SSH connection to first instance on %s::%s', stack, layer);
-
-		fetcher.getLayerId({
-			StackName: stack,
-			LayerName: layer
-		}, function(StackId, LayerId) {
-			if (LayerId === null) {
-				console.log('Layer ' + layer + ' not found');
-				process.exit(1);
-			}
-
-			opsworks.describeInstances({
-				LayerId: LayerId
-			}, function(error, data) {
-				if (error) {
-					console.log(error);
-				} else {
-					var hosts = [];
-					for (var i = 0; i < data.Instances.length; i++) {
-						var instance = data.Instances[i];
-						if (instance.Status == 'online') {
-
-							// Are we only looking for one instance and is this the one?
-							if (typeof options.hostname != 'undefined') {
-								//console.log("Hostname is " + options.hostname);
-								//console.log("Instance is " + instance.Hostname);
-								if (instance.Hostname === options.hostname) {
-									hosts.push(data.Instances[i].PublicIp);
-									break;
-								}
-							} else {
-								hosts.push(data.Instances[i].PublicIp);
-							}
-						}
-					}
-
-					// Start the options string with a space so it doesn't collide with the preceding argument
-					var sshOptionsString = " ";
-					var sshOpts = config.get('ssh:options');
-					if (sshOpts !== undefined) {
-						for (var key in sshOpts) {
-							if (sshOpts.hasOwnProperty(key)) {
-								sshOptionsString += "-o " + key + "=" + sshOpts[key];
-							}
-						}
-					}
-
-					var ssh_username = config.get('ssh:username');
-
-					// Get the default key from the config file
-					var keyToUse = config.get('ssh:identity');
-					// Override the default if supplied as a command-line argument
-					if (typeof options.identity != 'undefined') {
-						keyToUse = options.identity;
-					}
-
-					var sshCommand = "ssh " + sshOptionsString + " -i " + keyToUse + " " + ssh_username + '@' + hosts[0];
-					console.log(sshCommand);
-					exec_sh(sshCommand);
-				}
-			});
-		});
-	});
+	.action(commands.ssh2);
 
 app.command('config [key] [value]')
 	.description('Update settings in the OpsWorks config file')
