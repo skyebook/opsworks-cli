@@ -3,6 +3,8 @@ var app = require('commander');
 
 // Internal Dependencies
 var config = require('./lib/config');
+
+process.env.AWS_PROFILE = config.get('profile');
 var commands = require('./lib/commands');
 
 app
