@@ -117,6 +117,12 @@ app.command('ssh2 [layer]')
 	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
 	.action(commands.ssh2);
 
+app.command('scp [layer] [file]')
+	.description('SCP to a server')
+	.option('-i, --identity <identity>', 'The location of the key to use')
+	.option('-h, --hostname [hostname]', 'The hostname of a single instance to log in to')
+	.action(commands.scp);
+
 app.command('config [key] [value]')
 	.description('Update settings in the OpsWorks config file')
 	.action(config.update);
